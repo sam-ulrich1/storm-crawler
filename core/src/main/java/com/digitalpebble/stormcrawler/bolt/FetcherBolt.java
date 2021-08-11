@@ -458,6 +458,7 @@ public class FetcherBolt extends StatusEmitterBolt {
         @Override
         public void run() {
             while (true) {
+                LOG.debug("[Fetcher #{}] {} : retrieving fetch item from queue",taskID, getName());
                 FetchItem fit = fetchQueues.getFetchItem();
                 if (fit == null) {
                     LOG.trace("{} spin-waiting ...", getName());
@@ -472,6 +473,8 @@ public class FetcherBolt extends StatusEmitterBolt {
                     spinWaiting.decrementAndGet();
                     continue;
                 }
+
+                LOG.debug("[Fetcher #{}] {} : updating fetch operation meta",taskID, getName());
 
                 activeThreads.incrementAndGet(); // count threads
 
@@ -500,13 +503,20 @@ public class FetcherBolt extends StatusEmitterBolt {
                 boolean asap = false;
 
                 try {
+                    LOG.debug("[Fetcher #{}] {} : beginning fetch operation",taskID, getName());
+
                     URL url = new URL(fit.url);
+
+                    LOG.debug("[Fetcher #{}] {} : retrieving protocol for url",taskID, getName());
+
                     Protocol protocol = protocolFactory.getProtocol(url);
 
                     if (protocol == null)
                         throw new RuntimeException(
                                 "No protocol implementation found for "
                                         + fit.url);
+
+                    LOG.debug("[Fetcher #{}] {} : retrieving robot rules",taskID, getName());
 
                     BaseRobotRules rules = protocol.getRobotRules(fit.url);
                     boolean fromCache = false;
@@ -517,6 +527,8 @@ public class FetcherBolt extends StatusEmitterBolt {
                     } else {
                         eventCounter.scope("robots.fetched").incrBy(1);
                     }
+
+                    LOG.debug("[Fetcher #{}] {} : handling sitemap logic",taskID, getName());
 
                     // autodiscovery of sitemaps
                     // the sitemaps will be sent down the topology
@@ -551,6 +563,8 @@ public class FetcherBolt extends StatusEmitterBolt {
                     boolean foundSitemap = (rules.getSitemaps().size() > 0);
                     metadata.setValue(SiteMapParserBolt.foundSitemapKey,
                             Boolean.toString(foundSitemap));
+
+                    LOG.debug("[Fetcher #{}] {} : checking robots permission",taskID, getName());
 
                     if (!rules.isAllowed(fit.url)) {
                         LOG.info("Denied by robots.txt: {}", fit.url);
@@ -608,6 +622,8 @@ public class FetcherBolt extends StatusEmitterBolt {
                         }
                     }
 
+                    LOG.debug("[Fetcher #{}] {} : checking queue time for url",taskID, getName());
+
                     long start = System.currentTimeMillis();
                     long timeInQueues = start - fit.creationTime;
 
@@ -624,12 +640,16 @@ public class FetcherBolt extends StatusEmitterBolt {
                         continue;
                     }
 
+                    LOG.debug("[Fetcher #{}] {} : executing fetch request",taskID, getName());
+
                     ProtocolResponse response = protocol
                             .getProtocolOutput(fit.url, metadata);
 
                     long timeFetching = System.currentTimeMillis() - start;
 
                     final int byteLength = response.getContent().length;
+
+                    LOG.debug("[Fetcher #{}] {} : processing meta data associated with fetch operation",taskID, getName());
                     
                     // get any metrics from the protocol metadata
                     // expect Longs
@@ -685,6 +705,8 @@ public class FetcherBolt extends StatusEmitterBolt {
                     final Values tupleToSend = new Values(fit.url, mergedMD,
                             status);
 
+                    LOG.debug("[Fetcher #{}] {} : completed metadata assembly",taskID, getName());
+
                     // if the status is OK emit on default stream
                     if (status.equals(Status.FETCHED)) {
                         if (response.getStatusCode() == 304) {
@@ -723,6 +745,8 @@ public class FetcherBolt extends StatusEmitterBolt {
                     else {
                         emit(Constants.StatusStreamName, fit.t, tupleToSend);
                     }
+
+                    LOG.debug("[Fetcher #{}] {} : fetch operation completed",taskID, getName());
 
                 } catch (Exception exece) {
                     String message = exece.getMessage();
