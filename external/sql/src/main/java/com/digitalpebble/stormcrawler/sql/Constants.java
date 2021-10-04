@@ -18,7 +18,7 @@
 package com.digitalpebble.stormcrawler.sql;
 
 public class Constants {
-
+    public static final String SQL_STATUS_BUCKETS = "sql.buckets";
     public static final String SQL_STATUS_TABLE_PARAM_NAME = "sql.status.table";
     public static final String SQL_MAX_DOCS_BUCKET_PARAM_NAME = "sql.max.urls.per.bucket";
     public static final String SQL_MAXRESULTS_PARAM_NAME = "sql.spout.max.results";

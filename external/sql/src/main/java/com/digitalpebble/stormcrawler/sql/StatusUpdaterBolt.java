@@ -98,6 +98,8 @@ public class StatusUpdaterBolt extends AbstractStatusUpdaterBolt {
 
         batchMaxSize = ConfUtils.getInt(stormConf, Constants.SQL_UPDATE_BATCH_SIZE_PARAM_NAME, 1000);
 
+        maxNumBuckets = ConfUtils.getInt(stormConf, Constants.SQL_STATUS_BUCKETS, 1);
+
         try {
             connection = SQLUtil.getConnection(stormConf);
         } catch (SQLException ex) {
