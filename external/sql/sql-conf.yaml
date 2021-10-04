@@ -30,7 +30,7 @@ config:
   
   sql.index.table: "content"
   
-    # Metrics consumers:
+  # Metrics consumers:
   topology.metrics.consumer.register:
      - class: "com.digitalpebble.stormcrawler.sql.metrics.MetricsConsumer"
        parallelism.hint: 1
