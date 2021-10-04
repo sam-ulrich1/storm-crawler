@@ -108,7 +108,7 @@ public class StatusUpdaterBolt extends AbstractStatusUpdaterBolt {
         String query = tableName + " (url, status, nextfetchdate, metadata, bucket, host)"
                 + " values (?, ?, ?, ?, ?, ?)";
 
-        updateQuery = "INSERT INTO " + query + " ON DUPLICATE KEY UPDATE status=values(status) nextfetchdate=values(nextfetchdate) metadata=values(metadata)";
+        updateQuery = "INSERT INTO " + query + " ON DUPLICATE KEY UPDATE status=values(status), nextfetchdate=values(nextfetchdate), metadata=values(metadata)";
         insertQuery = "INSERT IGNORE INTO " + query;
 
         try {
